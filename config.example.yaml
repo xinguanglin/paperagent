@@ -1,0 +1,45 @@
+# 论文智能体配置。复制为 config.yaml 后填写。
+# 任何 OpenAI 兼容服务均可：智谱 / DeepSeek / Qwen(DashScope 兼容模式) / Moonshot /
+# OpenRouter / Ollama / vLLM ……只需换 base_url + api_key + 模型名
+api_key: ""
+
+# 服务地址（可选）：空 = OpenAI 官方。
+# 智谱按量计费通道: https://open.bigmodel.cn/api/paas/v4
+# 智谱 Coding Plan 套餐通道: https://open.bigmodel.cn/api/coding/paas/v4
+# Ollama 本地: http://localhost:11434/v1   vLLM 自建: http://your-host:8000/v1
+base_url: ""
+
+# 对话/解读模型名（各服务自己的模型名）
+chat_model: ""
+
+# 推理档位（可选）：仅 GLM-5.x 这类"思考不可关闭"的模型需要，如 low；
+# 其他厂商留空即可（留空则不发送该参数）
+chat_thinking: ""
+
+# 标题语义检索用的 embedding 模型与维度。
+# 注意：更换维度后新论文向量与存量向量不可比，需重刷全部论文向量
+embedding_model: "embedding-3"
+embedding_dims: 1024
+
+mysql:
+  host: localhost
+  port: 3306
+  user: root
+  password: "123456"
+  database: paper_agent
+
+server:
+  host: 127.0.0.1
+  port: 8787
+
+# HTTP 代理（可选）。若本机访问不了 arxiv.org，填入代理地址，如：
+# proxy: "http://127.0.0.1:7890"
+proxy: ""
+
+# 论文源：auto = arXiv 优先、OpenAlex 自动降级；也可强制 arxiv 或 openalex
+source: auto
+
+# 视觉识图（可选）：非空 = 启用原文图片识图（公式图/实验图/架构原图由视觉模型转述后注入解读）
+# vision_model: glm-5.3-flash
+# 每篇论文最多识图张数（成本闸门）
+# vision_max_figures: 10

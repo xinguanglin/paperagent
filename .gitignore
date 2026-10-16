@@ -1,0 +1,18 @@
+config.yaml
+__pycache__/
+*.pyc
+.pytest_cache/
+web/node_modules/
+web/dist/
+.venv/
+*.log
+logs/
+uploads/
+uploads/
+gui-test-screenshots/
+config.docker.yaml
+
+# local-only launcher & tooling
+start-local.bat
+.zcode/
+docs/

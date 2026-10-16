@@ -1,0 +1,38 @@
+services:
+  db:
+    image: mysql:8.4
+    container_name: paperagent-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: paperagent
+      MYSQL_DATABASE: paper_agent
+      TZ: Asia/Shanghai
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-ppaperagent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    # 不映射宿主机端口：仅容器网络内可见，避免与本机 13306(kind 转发)等冲突
+
+  app:
+    build: .
+    container_name: paperagent-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8787:8787"
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      # 容器内固定读取 /app/config.yaml：把 docker 专用配置挂进去（见 config.docker.example.yaml）
+      - ./config.docker.yaml:/app/config.yaml:ro
+      # 上传文件与识图图片的持久化（重跑 docker compose down 也不丢）
+      - app-uploads:/app/server/uploads
+
+volumes:
+  mysql-data:
+  app-uploads:
