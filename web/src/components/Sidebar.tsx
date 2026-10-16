@@ -31,7 +31,7 @@ export default function Sidebar() {
         </NavLink>
       ))}
       <div className="foot">
-        FastAPI + MySQL + 智谱 GLM
+        FastAPI + MySQL + LLM
         <br />
         每天 08:00 自动执行
       </div>

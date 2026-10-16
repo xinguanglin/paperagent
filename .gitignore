@@ -16,3 +16,4 @@ config.docker.yaml
 start-local.bat
 .zcode/
 docs/
+.idea/
