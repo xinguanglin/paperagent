@@ -74,3 +74,18 @@ def test_paper_context_fulltext_absent_no_section():
     """仅摘要论文（无缓存全文）：开关开着也不输出空的原文段。"""
     ctx = _paper_context(_make_paper(with_digest=False), include_fulltext=True)
     assert "原文全文" not in ctx
+
+
+def test_paper_context_fulltext_truncated_at_cap():
+    """超长全文截到 MAX_FULLTEXT_CHARS 并带截断提示;恰好等于上限不提示。"""
+    from app.llm_client import MAX_FULLTEXT_CHARS
+
+    paper = _make_paper(with_digest=True)
+    paper.local_fulltext = "x" * (MAX_FULLTEXT_CHARS + 500)
+    ctx = _paper_context(paper, include_fulltext=True)
+    assert "（原文过长，已截断）" in ctx
+    assert len(ctx) < len(paper.local_fulltext)  # 确实截短了
+
+    paper.local_fulltext = "y" * MAX_FULLTEXT_CHARS
+    ctx = _paper_context(paper, include_fulltext=True)
+    assert "截断" not in ctx  # 恰好等于上限:原样注入不提示

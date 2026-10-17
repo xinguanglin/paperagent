@@ -14,8 +14,8 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import contains_eager
 
 from app import deps
-from app.llm_client import MAX_FULLTEXT_CHARS
 from app.database import get_session_factory
+from app.llm_client import MAX_FULLTEXT_CHARS
 from app.models import Digest, Paper
 from app.upload_parser import parse_paper_file, sanitize_filename
 
@@ -243,7 +243,7 @@ def _paper_context(paper: Paper, include_fulltext: bool = False) -> str:
                     )
         if paper.local_fulltext:
             clipped = paper.local_fulltext[:MAX_FULLTEXT_CHARS]
-            note = "（超长已截断）" if len(paper.local_fulltext) > MAX_FULLTEXT_CHARS else ""
+            note = "（原文过长，已截断）" if len(paper.local_fulltext) > MAX_FULLTEXT_CHARS else ""
             parts.append(
                 f"原文全文{note}：\n{clipped}\n"
                 "（以上为论文原文。回答细节问题时优先依据原文；前面的提炼内容仅作辅助。）"
