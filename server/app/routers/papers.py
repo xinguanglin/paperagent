@@ -14,6 +14,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import contains_eager
 
 from app import deps
+from app.llm_client import MAX_FULLTEXT_CHARS
 from app.database import get_session_factory
 from app.models import Digest, Paper
 from app.upload_parser import parse_paper_file, sanitize_filename
@@ -207,8 +208,12 @@ def _clamp_history(messages: list[dict]) -> list[dict]:
     return out
 
 
-def _paper_context(paper: Paper) -> str:
-    """把论文摘要与全部提炼内容拼成对话上下文。"""
+def _paper_context(paper: Paper, include_fulltext: bool = False) -> str:
+    """把论文摘要与全部提炼内容拼成对话上下文。
+
+    include_fulltext（config.chat_fulltext）时追加原文层：识图转述 + 全文（截断），
+    让对话能回答提炼未覆盖的细节；关闭则只基于提炼内容，省 token。
+    """
     d = paper.digest
     parts = [
         f"论文标题：{paper.title}",
@@ -229,6 +234,20 @@ def _paper_context(paper: Paper) -> str:
             for i, g in enumerate(d.diagrams, 1):
                 kind = "流程/框架图" if g.get("type") == "flow" else "系统架构图"
                 parts.append(f"图示{i}（{kind}）{g.get('caption', '')}：\n{g.get('mermaid', '')}")
+    if include_fulltext:
+        if paper.figures:
+            for f in paper.figures:
+                if f.get("description"):
+                    parts.append(
+                        f"原文图{f['idx']}转述（{(f.get('caption') or '')[:60]}）：{f['description']}"
+                    )
+        if paper.local_fulltext:
+            clipped = paper.local_fulltext[:MAX_FULLTEXT_CHARS]
+            note = "（超长已截断）" if len(paper.local_fulltext) > MAX_FULLTEXT_CHARS else ""
+            parts.append(
+                f"原文全文{note}：\n{clipped}\n"
+                "（以上为论文原文。回答细节问题时优先依据原文；前面的提炼内容仅作辅助。）"
+            )
     return "\n\n".join(parts)
 
 
@@ -245,7 +264,9 @@ def chat_with_paper(paper_id: int, body: ChatBody):
         paper = session.get(Paper, paper_id)
         if paper is None:
             raise HTTPException(404, "论文不存在")
-        context = _paper_context(paper)  # 在 session 内取完关联数据，避免 detach 后懒加载
+        context = _paper_context(  # 在 session 内取完关联数据，避免 detach 后懒加载
+            paper, include_fulltext=bool(deps.config and deps.config.chat_fulltext)
+        )
     history = _clamp_history(body.messages)
     if not history:
         raise HTTPException(400, "对话消息为空")

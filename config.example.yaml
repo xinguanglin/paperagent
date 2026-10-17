@@ -43,3 +43,5 @@ source: auto
 # vision_model: glm-5.3-flash
 # 每篇论文最多识图张数（成本闸门）
 # vision_max_figures: 10
+# 论文对话注入原文全文（可回答论文细节问题）；false = 只基于提炼内容，省 token
+# chat_fulltext: true

@@ -33,6 +33,8 @@ class Config:
     # 视觉识图模型：空 = 关闭识图功能（提炼行为与纯文本管线一致）
     vision_model: str = ""
     vision_max_figures: int = 10  # 每篇论文最多识图张数（成本闸门）
+    # 论文对话注入原文全文（含识图转述），可回答提炼未覆盖的细节；关闭省 token
+    chat_fulltext: bool = True
 
     @property
     def mysql_url(self) -> str:
@@ -76,5 +78,6 @@ def load_config(path: str | Path | None = None) -> Config:
         source=str(raw.get("source") or "auto"),
         upload_dir=str(raw.get("upload_dir") or "uploads"),
         vision_model=str(raw.get("vision_model") or ""),
+        chat_fulltext=bool(raw.get("chat_fulltext", True)),
         vision_max_figures=int(raw["vision_max_figures"]) if raw.get("vision_max_figures") is not None else 10,
     )

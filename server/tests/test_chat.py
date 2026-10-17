@@ -52,3 +52,25 @@ def test_clamp_history_truncates_overlong_message():
     out = _clamp_history([{"role": "user", "content": "x" * (CHAT_MESSAGE_MAX + 100)}])
     assert len(out) == 1
     assert len(out[0]["content"]) == CHAT_MESSAGE_MAX
+
+
+def test_paper_context_fulltext_switch():
+    """chat_fulltext 开：注入识图转述 + 原文全文；关：两者都不进上下文。"""
+    paper = _make_paper(with_digest=True)
+    paper.local_fulltext = "全文正文ABCDEFG" * 200
+    paper.figures = [
+        {"idx": 1, "caption": "Fig 1", "status": "described", "description": "柱状图，纵轴为准确率"}
+    ]
+    ctx_off = _paper_context(paper, include_fulltext=False)
+    assert "全文正文" not in ctx_off and "柱状图" not in ctx_off
+
+    ctx_on = _paper_context(paper, include_fulltext=True)
+    assert "原文全文" in ctx_on and "全文正文" in ctx_on
+    assert "柱状图" in ctx_on  # 识图转述随原文层一起注入
+    assert "优先依据原文" in ctx_on
+
+
+def test_paper_context_fulltext_absent_no_section():
+    """仅摘要论文（无缓存全文）：开关开着也不输出空的原文段。"""
+    ctx = _paper_context(_make_paper(with_digest=False), include_fulltext=True)
+    assert "原文全文" not in ctx
